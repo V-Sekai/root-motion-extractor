@@ -1,0 +1,30 @@
+extends EditorPlugin
+tool
+
+var editor_interface: EditorInterface = null
+
+
+func _init():
+	print("Initialising RootMotionExtractor plugin")
+
+
+func _notification(p_notification: int):
+	match p_notification:
+		NOTIFICATION_PREDELETE:
+			print("Destroying RootMotionExtractor plugin")
+
+
+func get_name() -> String:
+	return "RootMotionExtractor"
+
+
+func _enter_tree() -> void:
+	editor_interface = get_editor_interface()
+
+	add_autoload_singleton(
+		"RootMotionExtractor", "res://addons/root_motion_extractor/root_motion_extractor.gd"
+	)
+
+
+func _exit_tree() -> void:
+	remove_autoload_singleton("RootMotionExtractor")
