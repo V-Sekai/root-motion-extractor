@@ -130,6 +130,46 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 			ResourceSaver.save(animation.resource_path, animation)
 						
 		
+static func rename_animations_import_function(p_file_path: String, p_scene: Node, p_animation_map: Dictionary) -> Node:
+	var config_file: ConfigFile = ConfigFile.new()
+	if config_file.load(p_file_path + ".import") == OK:
+		var animation_players: Array = _find_animation_players(p_scene, [])
+		
+		for animation_player in animation_players:
+			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			for animation_name in animation_name_list:
+				if p_animation_map.has(animation_name):
+					animation_player.rename_animation(animation_name, p_animation_map[animation_name])
+					var animation = animation_player.get_animation(p_animation_map[animation_name])
+					animation.resource_name = p_animation_map[animation_name]
+					
+					# Save the animation again if it was saved externally
+					if !animation.resource_local_to_scene:
+						ResourceSaver.save(animation.resource_path, animation)
+	else:
+		printerr("Could not load .import file for %s" % p_file_path)
+	
+	return p_scene
+	
+static func set_animations_loop_mode(p_file_path: String, p_scene: Node, p_loop_table: Dictionary) -> Node:
+	var config_file: ConfigFile = ConfigFile.new()
+	if config_file.load(p_file_path + ".import") == OK:
+		var animation_players: Array = _find_animation_players(p_scene, [])
+		
+		for animation_player in animation_players:
+			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			for animation_name in animation_name_list:
+				if p_loop_table.has(animation_name):
+					var animation = animation_player.get_animation(animation_name)
+					animation.loop = p_loop_table[animation_name]
+					# Save the animation again if it was saved externally
+					if !animation.resource_local_to_scene:
+						ResourceSaver.save(animation.resource_path, animation)
+	else:
+		printerr("Could not load .import file for %s" % p_file_path)
+	
+	return p_scene
+					
 static func root_motion_import_function(p_file_path: String, p_scene: Node, p_animation_conversion_table: Dictionary) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
 	if config_file.load(p_file_path + ".import") == OK:

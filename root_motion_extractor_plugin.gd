@@ -22,7 +22,7 @@ func _enter_tree() -> void:
 	editor_interface = get_editor_interface()
 
 	add_autoload_singleton(
-		"RootMotionExtractor", "res://addons/root_motion_extractor/root_motion_extractor.gd"
+		"RootMotionExtractor", "res://addons/root-motion-extractor/root_motion_extractor.gd"
 	)
 
 
