@@ -1,6 +1,8 @@
 tool
 extends Node
 
+const root_motion_flags_const = preload("root_motion_flags.gd")
+
 const ROOT_BONE = 0
 
 static func _find_skeletons(p_node: Node, p_skeleton_array: Array) -> Array:
@@ -42,6 +44,12 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 		var animation: Animation = p_animation_player.get_animation(animation_name)
 		
 		if p_animation_conversion_table.has(animation.resource_name):
+			var root_motion_extraction_flags: int = p_animation_conversion_table[animation.resource_name]
+			
+			# Not flags set, don't do anything
+			if root_motion_extraction_flags == 0:
+				continue
+			
 			var skeleton_transform_keys: Dictionary = {}
 			for track_idx in range(0, animation.get_track_count()):
 				var root_keys: Array = []
@@ -63,6 +71,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 							if bone_idx == ROOT_BONE:
 								var rest_transform: Transform = skeleton_node.get_bone_rest(bone_idx)
 								
+								var last_y_euler: float = 0.0
 								for key_idx in range(0, animation.track_get_key_count(track_idx)):
 									var time: float = animation.track_get_key_time(track_idx, key_idx)
 									var transition: float = animation.track_get_key_transition(track_idx, key_idx)
@@ -70,13 +79,23 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 									var value = animation.track_get_key_value(track_idx, key_idx)
 									var pose_local_transform: Transform = convert_tranform_value_to_transform(value)
 									
-									var pose_gt: Transform = rest_transform\
-									* pose_local_transform
+									var pose_gt: Transform = rest_transform * pose_local_transform
 									
 									var modified_pose_gt: Transform = pose_gt
 									
-									modified_pose_gt.origin.x = 0.0
-									modified_pose_gt.origin.z = 0.0
+									var global_y_rotation: float = 0.0
+									
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ROTATION_Y:
+										global_y_rotation = modified_pose_gt.basis.orthonormalized().get_euler().y
+									
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_X:
+										modified_pose_gt.origin.x = 0.0
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_Y:
+										modified_pose_gt.origin.y = 0.0
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_Z:
+										modified_pose_gt.origin.z = 0.0
+									
+									modified_pose_gt = modified_pose_gt.rotated(Vector3.UP, -global_y_rotation)
 									
 									pose_local_transform = rest_transform.affine_inverse()\
 									* modified_pose_gt
@@ -88,10 +107,25 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 									for key in root_keys:
 										cumulative_transform *= key["relative_gt"]
 										
+									var relative_y_rotation: float = global_y_rotation - last_y_euler
+									var relative_gt_origin: Vector3 = Vector3()
+									
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_X:
+										relative_gt_origin.x = pose_gt.origin.x
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_Y:
+										relative_gt_origin.y = pose_gt.origin.y
+									if root_motion_extraction_flags & root_motion_flags_const.EXTRACT_ORIGIN_Z:
+										relative_gt_origin.z = pose_gt.origin.z
+										
 									root_keys.append({
 										"time":time,
 										"transition":transition,
-										"relative_gt":cumulative_transform.inverse() * Transform(Basis(), Vector3(pose_gt.origin.x, 0.0, pose_gt.origin.z))})
+										"relative_y_rotation":relative_y_rotation,
+										"relative_gt":cumulative_transform.inverse() *
+										Transform(Basis(),
+										relative_gt_origin)})
+										
+									last_y_euler = global_y_rotation
 							
 						skeleton_transform_keys[skeleton_node] = root_keys
 			
@@ -115,9 +149,20 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 				
 				var root_keys: Array = skeleton_transform_keys[skeleton]
 				var cumulative_transform: Transform = Transform()
+				var cumulative_y_rotation: float = float()
 				for key in root_keys:
-					cumulative_transform *= key["relative_gt"]
-					var track_transform: Transform = cumulative_transform.scaled(skeleton_parent.get_scale())
+					var relative_gt: Transform = key["relative_gt"]
+					var relative_y_rotation: float = key["relative_y_rotation"]
+					
+					cumulative_transform *= \
+					Transform(
+						Basis(), relative_gt.origin
+					)
+					
+					var rotated_transform: Transform = Transform(cumulative_transform.basis.rotated(Vector3.UP, cumulative_y_rotation), cumulative_transform.origin)
+					var track_transform: Transform = rotated_transform.scaled(skeleton_parent.get_scale())
+					
+					cumulative_y_rotation += relative_y_rotation
 					
 					animation.track_insert_key(
 						track_idx,
