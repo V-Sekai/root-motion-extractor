@@ -176,6 +176,35 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 		if !animation.resource_local_to_scene:
 			ResourceSaver.save(animation.resource_path, animation)
 						
+static func fill_missing_skeleton_tracks(p_file_path: String, p_scene: Node) -> Node:
+	var config_file: ConfigFile = ConfigFile.new()
+	if config_file.load(p_file_path + ".import") == OK:
+		var animation_players: Array = _find_animation_players(p_scene, [])
+		var skeletons: Array = _find_skeletons(p_scene, [])
+		
+		for animation_player in animation_players:
+			var root: Node = animation_player.get_node(animation_player.root_node)
+			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			for animation_name in animation_name_list:
+				var animation: Animation = animation_player.get_animation(animation_name)
+				for skeleton in skeletons:
+					for i in range(0, skeleton.get_bone_count()):
+						var bone_name: String = skeleton.get_bone_name(i)
+						
+						var path: NodePath = NodePath(str(root.get_path_to(skeleton)) + ":" + bone_name)
+						
+						if animation.find_track(path) == -1:
+							var track_idx: int = animation.add_track(Animation.TYPE_TRANSFORM)
+							animation.track_set_path(track_idx, path)
+							animation.track_insert_key(track_idx, 0.0, convert_tranform_to_transform_value(Transform()))
+							animation.track_insert_key(track_idx, animation.length, convert_tranform_to_transform_value(Transform()))
+							animation.track_set_imported(track_idx, true)
+				# Save the animation again if it was saved externally
+				if !animation.resource_local_to_scene:
+					ResourceSaver.save(animation.resource_path, animation)
+					
+	return p_scene
+		
 		
 static func rename_animations_import_function(p_file_path: String, p_scene: Node, p_animation_map: Dictionary) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
