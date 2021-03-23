@@ -69,7 +69,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 							
 							# Bone is the root
 							if bone_idx == ROOT_BONE:
-								var rest_transform: Transform = skeleton_node.get_bone_rest(bone_idx)
+								var rest_gt_transform: Transform = skeleton_node.get_parent().transform * skeleton_node.transform * skeleton_node.get_bone_rest(bone_idx)
 								
 								var last_y_euler: float = 0.0
 								for key_idx in range(0, animation.track_get_key_count(track_idx)):
@@ -79,7 +79,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 									var value = animation.track_get_key_value(track_idx, key_idx)
 									var pose_local_transform: Transform = convert_tranform_value_to_transform(value)
 									
-									var pose_gt: Transform = rest_transform * pose_local_transform
+									var pose_gt: Transform = rest_gt_transform * pose_local_transform
 									
 									var modified_pose_gt: Transform = pose_gt
 									
@@ -97,7 +97,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 									
 									modified_pose_gt = modified_pose_gt.rotated(Vector3.UP, -global_y_rotation)
 									
-									pose_local_transform = rest_transform.affine_inverse()\
+									pose_local_transform = rest_gt_transform.affine_inverse()\
 									* modified_pose_gt
 									
 									animation.track_set_key_value(track_idx, key_idx,
@@ -126,8 +126,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 										relative_gt_origin)})
 										
 									last_y_euler = global_y_rotation
-							
-						skeleton_transform_keys[skeleton_node] = root_keys
+								skeleton_transform_keys[skeleton_node] = root_keys
 			
 			###########################################
 			# Move extracted root data to actual root #
@@ -143,9 +142,12 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 							if track_node == skeleton_parent:
 								animation.remove_track(track_idx)
 								
-				var track_idx: int = animation.add_track(Animation.TYPE_TRANSFORM)
-				animation.track_set_path(track_idx, root_node.get_path_to(skeleton_parent))
-				animation.track_set_imported(track_idx, true)
+				var root_path: NodePath = root_node.get_path_to(skeleton_parent)
+				var track_idx: int = animation.find_track(root_path)
+				if track_idx == -1:
+					track_idx = animation.add_track(Animation.TYPE_TRANSFORM)
+					animation.track_set_path(track_idx, root_path)
+					animation.track_set_imported(track_idx, true)
 				
 				var root_keys: Array = skeleton_transform_keys[skeleton]
 				var cumulative_transform: Transform = Transform()
@@ -160,14 +162,14 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 					)
 					
 					var rotated_transform: Transform = Transform(cumulative_transform.basis.rotated(Vector3.UP, cumulative_y_rotation), cumulative_transform.origin)
-					var track_transform: Transform = rotated_transform.scaled(skeleton_parent.get_scale())
+					var track_transform: Transform = rotated_transform
 					
 					cumulative_y_rotation += relative_y_rotation
 					
 					animation.track_insert_key(
 						track_idx,
 						key["time"],
-						convert_tranform_to_transform_value(track_transform),
+						convert_tranform_to_transform_value(track_transform * skeleton_parent.transform),
 						key["transition"])
 		
 		# Save the animation again if it was saved externally
