@@ -161,7 +161,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 						Basis(), relative_gt.origin
 					)
 					
-					var rotated_transform: Transform = Transform(cumulative_transform.basis.rotated(Vector3.UP, cumulative_y_rotation), cumulative_transform.origin)
+					var rotated_transform: Transform = Transform(cumulative_transform.basis.rotated(skeleton_parent.transform.basis.y, cumulative_y_rotation), cumulative_transform.origin)
 					var track_transform: Transform = rotated_transform
 					
 					cumulative_y_rotation += relative_y_rotation
