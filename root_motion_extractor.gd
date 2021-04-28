@@ -1,4 +1,4 @@
-tool
+@tool
 extends Node
 
 const root_motion_flags_const = preload("root_motion_flags.gd")

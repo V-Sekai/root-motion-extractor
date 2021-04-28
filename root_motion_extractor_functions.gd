@@ -1,4 +1,4 @@
-tool
+@tool
 extends Node
 
 const root_motion_flags_const = preload("root_motion_flags.gd")
@@ -6,7 +6,7 @@ const root_motion_flags_const = preload("root_motion_flags.gd")
 const ROOT_BONE = 0
 
 static func _find_skeletons(p_node: Node, p_skeleton_array: Array) -> Array:
-	if p_node is Skeleton:
+	if p_node is Skeleton3D:
 		p_skeleton_array.append(p_node)
 		
 	for child in p_node.get_children():
@@ -36,7 +36,7 @@ static func convert_tranform_to_transform_value(p_transform: Transform) -> Dicti
 	return value
 
 static func _convert_animation_player(p_animation_player: AnimationPlayer, p_skeletons: Array, p_animation_conversion_table: Dictionary) -> void:
-	var animation_names: PoolStringArray = p_animation_player.get_animation_list()
+	var animation_names: PackedStringArray = p_animation_player.get_animation_list()
 	var root_node_path: NodePath = p_animation_player.root_node
 	var root_node: Node = p_animation_player.get_node(root_node_path)
 	
@@ -61,8 +61,8 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 					var animation_track_path: NodePath = animation.track_get_path(track_idx)
 					var track_node: Node = root_node.get_node(animation_track_path)
 					
-					if track_node is Skeleton and p_skeletons.find(track_node) != -1:
-						var skeleton_node: Skeleton = track_node
+					if track_node is Skeleton3D and p_skeletons.find(track_node) != -1:
+						var skeleton_node: Skeleton3D = track_node
 						if animation_track_path.get_subname_count() > 0:
 							var bone_name: String = animation_track_path.get_subname(0)
 							var bone_idx: int = skeleton_node.find_bone(bone_name)
@@ -132,7 +132,7 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 			# Move extracted root data to actual root #
 			###########################################
 			for skeleton in p_skeletons:
-				var skeleton_parent: Spatial = skeleton.get_parent()
+				var skeleton_parent: Node3D = skeleton.get_parent()
 				if skeleton_parent:
 					for track_idx in range(0, animation.get_track_count()):
 						if animation.track_get_type(track_idx) == Animation.TYPE_TRANSFORM:
@@ -184,7 +184,7 @@ static func fill_missing_skeleton_tracks(p_file_path: String, p_scene: Node) -> 
 		
 		for animation_player in animation_players:
 			var root: Node = animation_player.get_node(animation_player.root_node)
-			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			var animation_name_list: PackedStringArray = animation_player.get_animation_list()
 			for animation_name in animation_name_list:
 				var animation: Animation = animation_player.get_animation(animation_name)
 				for skeleton in skeletons:
@@ -212,7 +212,7 @@ static func rename_animations_import_function(p_file_path: String, p_scene: Node
 		var animation_players: Array = _find_animation_players(p_scene, [])
 		
 		for animation_player in animation_players:
-			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			var animation_name_list: PackedStringArray = animation_player.get_animation_list()
 			for animation_name in animation_name_list:
 				if p_animation_map.has(animation_name):
 					animation_player.rename_animation(animation_name, p_animation_map[animation_name])
@@ -233,7 +233,7 @@ static func set_animations_loop_mode(p_file_path: String, p_scene: Node, p_loop_
 		var animation_players: Array = _find_animation_players(p_scene, [])
 		
 		for animation_player in animation_players:
-			var animation_name_list: PoolStringArray = animation_player.get_animation_list()
+			var animation_name_list: PackedStringArray = animation_player.get_animation_list()
 			for animation_name in animation_name_list:
 				if p_loop_table.has(animation_name):
 					var animation = animation_player.get_animation(animation_name)

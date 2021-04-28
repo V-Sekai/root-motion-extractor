@@ -1,4 +1,4 @@
-tool
+@tool
 extends Reference
 
 const EXTRACT_ORIGIN_X = 1 << 0
