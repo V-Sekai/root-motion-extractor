@@ -1,5 +1,5 @@
+@tool
 extends EditorPlugin
-tool
 
 var editor_interface: EditorInterface = null
 

@@ -1,5 +1,5 @@
 @tool
-extends Reference
+extends RefCounted
 
 const EXTRACT_ORIGIN_X = 1 << 0
 const EXTRACT_ORIGIN_Y = 1 << 1
