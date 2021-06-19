@@ -64,10 +64,10 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 					if track_node is Skeleton3D and p_skeletons.find(track_node) != -1:
 						var skeleton_node: Skeleton3D = track_node
 						if animation_track_path.get_subname_count() > 0:
-							var bone_name: String = animation_track_path.get_subname(0)
+							# GDScript 4 bug, no implicit casting between StringName and String
+							var bone_name: String = String(animation_track_path.get_subname(0))
 							var bone_idx: int = skeleton_node.find_bone(bone_name)
 							
-							# Bone is the root
 							if bone_idx == ROOT_BONE:
 								var rest_gt_transform: Transform3D = skeleton_node.get_parent().transform * skeleton_node.transform * skeleton_node.get_bone_rest(bone_idx)
 								
@@ -178,7 +178,9 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 						
 static func fill_missing_skeleton_tracks(p_file_path: String, p_scene: Node) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
-	if config_file.load(p_file_path + ".import") == OK:
+	# STUB (THIS RETURN RANDOM NUMBERS, WTF)
+	#if config_file.load(p_file_path + ".import") == OK:
+	if 1:
 		var animation_players: Array = _find_animation_players(p_scene, [])
 		var skeletons: Array = _find_skeletons(p_scene, [])
 		
@@ -208,7 +210,9 @@ static func fill_missing_skeleton_tracks(p_file_path: String, p_scene: Node) -> 
 		
 static func rename_animations_import_function(p_file_path: String, p_scene: Node, p_animation_map: Dictionary) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
-	if config_file.load(p_file_path + ".import") == OK:
+	# STUB (THIS RETURN RANDOM NUMBERS, WTF)
+	#if config_file.load(p_file_path + ".import") == OK:
+	if 1:
 		var empty_array: Array = []
 		var animation_players: Array = _find_animation_players(p_scene, empty_array)
 		#var animation_players: Array = _find_animation_players(p_scene, [])
@@ -231,7 +235,9 @@ static func rename_animations_import_function(p_file_path: String, p_scene: Node
 	
 static func set_animations_loop_mode(p_file_path: String, p_scene: Node, p_loop_table: Dictionary) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
-	if config_file.load(p_file_path + ".import") == OK:
+	# STUB (THIS RETURN RANDOM NUMBERS, WTF)
+	#if config_file.load(p_file_path + ".import") == OK:
+	if 1:
 		var animation_players: Array = _find_animation_players(p_scene, [])
 		
 		for animation_player in animation_players:
@@ -250,7 +256,9 @@ static func set_animations_loop_mode(p_file_path: String, p_scene: Node, p_loop_
 					
 static func root_motion_import_function(p_file_path: String, p_scene: Node, p_animation_conversion_table: Dictionary) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
-	if config_file.load(p_file_path + ".import") == OK:
+	# STUB (THIS RETURN RANDOM NUMBERS, WTF)
+	#if config_file.load(p_file_path + ".import") == OK:
+	if 1:
 		var animation_players: Array = _find_animation_players(p_scene, [])
 		var skeletons: Array = _find_skeletons(p_scene, [])
 		
