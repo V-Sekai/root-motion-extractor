@@ -43,8 +43,8 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 	for animation_name in animation_names:
 		var animation: Animation = p_animation_player.get_animation(animation_name)
 		
-		if p_animation_conversion_table.has(animation.resource_name):
-			var root_motion_extraction_flags: int = p_animation_conversion_table[animation.resource_name]
+		if p_animation_conversion_table.has(animation_name):
+			var root_motion_extraction_flags: int = p_animation_conversion_table[animation_name]
 			
 			# Not flags set, don't do anything
 			if root_motion_extraction_flags == 0:
@@ -65,8 +65,13 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 						var skeleton_node: Skeleton3D = track_node
 						if animation_track_path.get_subname_count() > 0:
 							# GDScript 4 bug, no implicit casting between StringName and String
-							var bone_name: String = String(animation_track_path.get_subname(0))
+							print("Pre-call get_subname" + str(p_animation_conversion_table))
+							animation_track_path.get_subname(0)
+							print("Post-call get_subname" + str(p_animation_conversion_table))
+							var bone_name: String = str(animation_track_path.get_subname(0))
+							print("get_subname cast to bone_name" + str(p_animation_conversion_table))
 							var bone_idx: int = skeleton_node.find_bone(bone_name)
+							print("find_bone called" + str(p_animation_conversion_table))
 							
 							if bone_idx == ROOT_BONE:
 								var rest_gt_transform: Transform3D = skeleton_node.get_parent().transform * skeleton_node.transform * skeleton_node.get_bone_rest(bone_idx)
@@ -221,8 +226,8 @@ static func rename_animations_import_function(p_file_path: String, p_scene: Node
 			var animation_name_list: PackedStringArray = animation_player.get_animation_list()
 			for animation_name in animation_name_list:
 				if p_animation_map.has(animation_name):
-					animation_player.rename_animation(animation_name, p_animation_map[animation_name])
-					var animation = animation_player.get_animation(p_animation_map[animation_name])
+					animation_player.rename_animation(StringName(animation_name), StringName(p_animation_map[animation_name]))
+					var animation = animation_player.get_animation(StringName(p_animation_map[animation_name]))
 					animation.resource_name = p_animation_map[animation_name]
 					
 					# Save the animation again if it was saved externally
