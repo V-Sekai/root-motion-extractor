@@ -1,4 +1,4 @@
-tool
+@tool
 extends EditorScenePostImport
 
 # Use this as an example script for writing your own custom post-import scripts. The function requires you pass a table
