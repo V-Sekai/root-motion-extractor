@@ -167,7 +167,7 @@ static func _convert_animation(
 									p_animation.track_insert_key(
 										root_track_idx,
 										key["time"],
-										key["value"] * skeleton_parent.transform.basis.get_rotation_quaternion(),
+										skeleton_parent.transform.basis.get_rotation_quaternion() * key["value"],
 										key["transition"])
 						
 static func _add_reset_tracks(
