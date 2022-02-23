@@ -115,7 +115,7 @@ static func _convert_track(
 	
 	return root_keys
 
-static func _convert_animation(
+static func _convert_animation_with_root_motion(
 	p_animation: Animation,
 	p_root_node: Node,
 	p_skeletons: Array,
@@ -167,7 +167,7 @@ static func _convert_animation(
 									p_animation.track_insert_key(
 										root_track_idx,
 										key["time"],
-										key["value"] * skeleton_parent.transform.basis.get_rotation_quaternion(),
+										skeleton_parent.transform.basis.get_rotation_quaternion() * key["value"],
 										key["transition"])
 						
 static func _add_reset_tracks(
@@ -201,7 +201,7 @@ static func _add_reset_tracks(
 			skeleton_parent.transform.basis.get_rotation_quaternion()
 			)
 						
-static func _convert_animation_player(p_animation_player: AnimationPlayer, p_skeletons: Array, p_animation_conversion_table: Dictionary) -> void:
+static func _convert_animation_player_with_root_motion(p_animation_player: AnimationPlayer, p_skeletons: Array, p_animation_conversion_table: Dictionary) -> void:
 	var animation_names: PackedStringArray = p_animation_player.get_animation_list()
 	var root_node_path: NodePath = p_animation_player.root_node
 	var root_node: Node = p_animation_player.get_node_or_null(root_node_path)
@@ -232,13 +232,13 @@ static func _convert_animation_player(p_animation_player: AnimationPlayer, p_ske
 			if root_motion_extraction_flags == 0:
 				continue
 			
-			_convert_animation(animation, root_node, p_skeletons, root_reset_transforms, root_motion_extraction_flags)
+			_convert_animation_with_root_motion(animation, root_node, p_skeletons, root_reset_transforms, root_motion_extraction_flags)
 		else:
 			_add_reset_tracks(animation, p_skeletons, root_node)
 		
 			
 		if !animation.resource_local_to_scene:
-			ResourceSaver.save(animation.resource_path, animation)	
+			ResourceSaver.save(animation.resource_path, animation)
 		
 		
 static func rename_animations_import_function(p_file_path: String, p_scene: Node, p_animation_map: Dictionary) -> Node:
@@ -275,7 +275,61 @@ static func root_motion_import_function(p_file_path: String, p_scene: Node, p_an
 		var skeletons: Array = _find_skeletons(p_scene, [])
 		
 		for animation_player in animation_players:
-			_convert_animation_player(animation_player, skeletons, p_animation_conversion_table)
+			_convert_animation_player_with_root_motion(animation_player, skeletons, p_animation_conversion_table)
+	else:
+		printerr("Could not load .import file for %s" % p_file_path)
+		
+	return p_scene
+	
+static func _convert_animation_player_to_additive(p_animation_player: AnimationPlayer, p_additive_animations: Array) -> void:
+	var animation_names: PackedStringArray = p_animation_player.get_animation_list()
+	var root_node: Node = p_animation_player.get_node_or_null(p_animation_player.root_node)
+	
+	###################
+	# Reset Animation #
+	###################
+	var reset_animation_name: String = p_animation_player.assigned_animation
+	var reset_animation: Animation = null
+	if reset_animation_name != "":
+		reset_animation = p_animation_player.get_animation(reset_animation_name)
+		
+	if !reset_animation:
+		printerr("RESET animation not found!")
+		return
+		
+	for animation_name in animation_names:
+		if p_additive_animations.has(animation_name):
+			var animation: Animation = p_animation_player.get_animation(animation_name)
+			for track_idx in range(0, animation.get_track_count()):
+				var path: NodePath = animation.track_get_path(track_idx)
+				var type: int = animation.track_get_type(track_idx)
+				
+				var reset_track_idx: int = reset_animation.find_track(path, type)
+				if reset_track_idx > -1:
+					match type:
+						Animation.TYPE_POSITION_3D:
+							for i in range(0, animation.track_get_key_count(track_idx)):
+								animation.track_set_key_value(track_idx, i, Vector3())
+#								animation.track_get_key_value(track_idx, i)
+#								- reset_animation.track_get_key_value(reset_track_idx, 0))
+						Animation.TYPE_ROTATION_3D:
+							for i in range(0, animation.track_get_key_count(track_idx)):
+								animation.track_set_key_value(track_idx, i, Quaternion.IDENTITY)
+#								animation.track_get_key_value(track_idx, i)
+#								* reset_animation.track_get_key_value(reset_track_idx, 0).inverse())
+								
+			if !animation.resource_local_to_scene:
+				ResourceSaver.save(animation.resource_path, animation)
+	
+static func convert_to_additive_function(p_file_path: String, p_scene: Node, p_additive_animations: Array) -> Node:
+	var config_file: ConfigFile = ConfigFile.new()
+	# STUB (THIS RETURN RANDOM NUMBERS, WTF)
+	#if config_file.load(p_file_path + ".import") == OK:
+	if 1:
+		var animation_players: Array = _find_animation_players(p_scene, [])
+		
+		for animation_player in animation_players:
+			_convert_animation_player_to_additive(animation_player, p_additive_animations)
 	else:
 		printerr("Could not load .import file for %s" % p_file_path)
 		
