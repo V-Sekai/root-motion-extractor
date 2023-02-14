@@ -14,8 +14,8 @@ func _notification(p_notification: int):
 			print("Destroying RootMotionExtractor plugin")
 
 
-func get_name() -> String:
-	return "RootMotionExtractor"
+func get_name() -> StringName:
+	return StringName("RootMotionExtractor")
 
 
 func _enter_tree() -> void:

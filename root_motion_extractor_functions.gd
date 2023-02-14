@@ -238,7 +238,7 @@ static func _convert_animation_player_with_root_motion(p_animation_player: Anima
 		
 			
 		if !animation.resource_local_to_scene:
-			ResourceSaver.save(animation.resource_path, animation)
+			ResourceSaver.save(animation, animation.resource_path)
 		
 		
 static func rename_animations_import_function(p_file_path: String, p_scene: Node, p_animation_map: Dictionary) -> Node:
@@ -260,7 +260,7 @@ static func rename_animations_import_function(p_file_path: String, p_scene: Node
 					
 					# Save the animation again if it was saved externally
 					if !animation.resource_local_to_scene:
-						ResourceSaver.save(animation.resource_path, animation)
+						ResourceSaver.save(animation, animation.resource_path)
 	else:
 		printerr("Could not load .import file for %s" % p_file_path)
 	
@@ -319,7 +319,7 @@ static func _convert_animation_player_to_additive(p_animation_player: AnimationP
 #								* reset_animation.track_get_key_value(reset_track_idx, 0).inverse())
 								
 			if !animation.resource_local_to_scene:
-				ResourceSaver.save(animation.resource_path, animation)
+				ResourceSaver.save(animation, animation.resource_path)
 	
 static func convert_to_additive_function(p_file_path: String, p_scene: Node, p_additive_animations: Array) -> Node:
 	var config_file: ConfigFile = ConfigFile.new()
